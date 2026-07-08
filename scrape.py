@@ -196,8 +196,20 @@ def main():
     total_today = sum(len(d) for d in today_all.values())
 
     if total_today == 0:
-        print("  ⚠️  今日暂无数据，跳过")
+        print("  ⏳ 网站尚未发布今日数据，等待下次检查...")
         return
+
+    # 如果今天已经抓取过，跳过（避免重复）
+    if OUTPUT_FILE.exists():
+        wb_check = load_workbook(OUTPUT_FILE)
+        if sheet_name in wb_check.sheetnames:
+            ws_check = wb_check[sheet_name]
+            # 检查是否已有实际数据（不止表头）
+            if ws_check.max_row > 3:
+                print("  ✅ 今日数据已存在，无需重复抓取")
+                wb_check.close()
+                return
+        wb_check.close()
 
     for cat in CATEGORIES:
         count = len(today_all.get(cat, {}))
